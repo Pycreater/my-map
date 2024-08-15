@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -13,6 +13,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { FaMapMarkerAlt } from "react-icons/fa";
 
+// Define marker data type
 interface MarkerData {
   position: [number, number];
   label: string;
@@ -32,30 +33,11 @@ function CenterMap({ position }: { position: [number, number] }) {
   return null;
 }
 
-const CustomMarkerIcon: React.FC<{ zoom: number }> = ({ zoom }) => {
-  const iconSize = Math.max(20, 30 - (zoom - 5) * 2);
-  return (
-    <div
-      style={{
-        color: "red",
-        fontSize: `${iconSize}px`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: `${iconSize}px`,
-        height: `${iconSize}px`,
-      }}
-    >
-      <FaMapMarkerAlt />
-    </div>
-  );
-};
-
 const createCustomIcon = (zoom: number) => {
   const iconSize = Math.max(20, 30 - (zoom - 5) * 2);
   return L.divIcon({
     className: "custom-icon",
-    html: `<div id="custom-icon" style="display: flex; align-items: center; justify-content: center; width: ${iconSize}px; height: ${iconSize}px; color: red; font-size: ${iconSize}px;"><div>🚩</div></div>`,
+    html: `<div style="display: flex; align-items: center; justify-content: center; width: ${iconSize}px; height: ${iconSize}px; color: red; font-size: ${iconSize}px;">🚩</div>`,
     iconSize: [iconSize, iconSize],
     iconAnchor: [iconSize / 2, iconSize],
   });
@@ -64,6 +46,23 @@ const createCustomIcon = (zoom: number) => {
 const MyMap: React.FC = () => {
   const [center, setCenter] = useState<[number, number]>([28.6139, 77.209]);
   const [zoom, setZoom] = useState<number>(5);
+
+  // Update zoom state on zoom event
+  const ZoomHandler = () => {
+    const map = useMap();
+    useEffect(() => {
+      const handleZoom = () => {
+        setZoom(map.getZoom());
+      };
+      map.on("zoom", handleZoom);
+      return () => {
+        map.off("zoom", handleZoom);
+      };
+    }, [map]);
+
+    return null;
+  };
+
   const handleZoomIn = () => {
     setZoom((prevZoom) => Math.min(prevZoom + 1, 18));
   };
@@ -79,7 +78,6 @@ const MyMap: React.FC = () => {
         zoom={zoom}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
-        onZoom={(e) => setZoom(e.target.getZoom())}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {markers.map((marker, index) => (
@@ -98,6 +96,7 @@ const MyMap: React.FC = () => {
         ))}
         <CenterMap position={center} />
         <ZoomControl position="topright" />
+        <ZoomHandler />
       </MapContainer>
       <div style={{ position: "absolute", top: 10, right: 10 }}>
         <button onClick={handleZoomIn} style={{ margin: "0 5px" }}>
