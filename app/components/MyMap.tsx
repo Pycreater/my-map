@@ -11,7 +11,6 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { FaMapMarkerAlt } from "react-icons/fa";
 
 // Define marker data type
 interface MarkerData {
