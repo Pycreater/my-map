@@ -11,8 +11,8 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { FaMapMarkerAlt } from "react-icons/fa";
 
-// Define marker data type
 interface MarkerData {
   position: [number, number];
   label: string;
@@ -32,16 +32,44 @@ function CenterMap({ position }: { position: [number, number] }) {
   return null;
 }
 
-const MyMap: React.FC = () => {
-  const [center, setCenter] = useState<[number, number]>([28.6139, 77.209]); // Initial center
-  const [zoom, setZoom] = useState<number>(5); // Initial zoom level
+const CustomMarkerIcon: React.FC<{ zoom: number }> = ({ zoom }) => {
+  const iconSize = Math.max(20, 30 - (zoom - 5) * 2);
+  return (
+    <div
+      style={{
+        color: "red",
+        fontSize: `${iconSize}px`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: `${iconSize}px`,
+        height: `${iconSize}px`,
+      }}
+    >
+      <FaMapMarkerAlt />
+    </div>
+  );
+};
 
+const createCustomIcon = (zoom: number) => {
+  const iconSize = Math.max(20, 30 - (zoom - 5) * 2);
+  return L.divIcon({
+    className: "custom-icon",
+    html: `<div id="custom-icon" style="display: flex; align-items: center; justify-content: center; width: ${iconSize}px; height: ${iconSize}px; color: red; font-size: ${iconSize}px;"><div>🚩</div></div>`,
+    iconSize: [iconSize, iconSize],
+    iconAnchor: [iconSize / 2, iconSize],
+  });
+};
+
+const MyMap: React.FC = () => {
+  const [center, setCenter] = useState<[number, number]>([28.6139, 77.209]);
+  const [zoom, setZoom] = useState<number>(5);
   const handleZoomIn = () => {
-    setZoom((prevZoom) => Math.min(prevZoom + 1, 18)); // Max zoom level is 18
+    setZoom((prevZoom) => Math.min(prevZoom + 1, 18));
   };
 
   const handleZoomOut = () => {
-    setZoom((prevZoom) => Math.max(prevZoom - 1, 1)); // Min zoom level is 1
+    setZoom((prevZoom) => Math.max(prevZoom - 1, 1));
   };
 
   return (
@@ -51,12 +79,14 @@ const MyMap: React.FC = () => {
         zoom={zoom}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
+        onZoom={(e) => setZoom(e.target.getZoom())}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {markers.map((marker, index) => (
           <Marker
             key={index}
             position={marker.position}
+            icon={createCustomIcon(zoom)}
             eventHandlers={{
               click: () => {
                 setCenter(marker.position);
